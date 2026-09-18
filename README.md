@@ -25,7 +25,7 @@ trimmedia-linux/
 
 | 组件 | 说明 |
 | --- | --- |
-| `rpcbroker`（`fntv.arm64`） | 自研中间层，负责启动并协调整个服务，模拟飞牛的 RPC 与应用中心接口 |
+| `rpcbroker`（`fntv.arm64`） | 中间层，负责启动并协调整个服务，模拟飞牛的 RPC 与应用中心接口 |
 | `mediasrv` | 飞牛 OS arm64 提取的闭源后端，自带 FFmpeg 7 运行库（位于 `lib/mediasrv`），不依赖系统 apt 安装的 ffmpeg |
 | `trim-media` | 影视应用主程序，提供 Web 服务与前端页面 |
 
