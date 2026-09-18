@@ -44,6 +44,7 @@ trimmedia-linux/
 ```bash
 sudo bash install.sh
 ```
+> 可以通过设置环境变量`PROXY_PREFIX`来加速下载
 
 > 说明：Debian 13 会直接安装系统自带的 FFmpeg / 编解码相关库；其余版本若缺少对应包，脚本会额外下载 `lib.extends.zip` 作为补充依赖。
 
