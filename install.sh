@@ -14,6 +14,11 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 NEED_EXTENDS="false"
 
+# GitHub 下载代理前缀，可通过环境变量传入，如: PROXY_PREFIX=https://ghproxy.com ./install.sh
+# 默认为空（直连），末尾的 / 会被自动去掉，拼接格式为 ${PROXY_PREFIX}${URL}
+PROXY_PREFIX="${PROXY_PREFIX:-}"
+PROXY_PREFIX="${PROXY_PREFIX%/}"
+
 info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
 error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
@@ -113,18 +118,23 @@ esac
 
 # 下载依赖包
 if [ "${NEED_EXTENDS}" = "true" ]; then
-    wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/lib.extends.zip"
+    wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/lib.extends.zip"
     unzip lib.extends.zip
     rm lib.extends.zip
 fi
 
 
-wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim-media-lib.zip"
+wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim-media-lib.zip"
 unzip trim-media-lib.zip
 rm trim-media-lib.zip
 
-wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim.media.tar.gz"
+wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim.media.tar.gz"
 tar xzvf trim.media.tar.gz
 rm trim.media.tar.gz
+
+if [ ! -e "./fntv.arm64" ]; then
+    wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/fntv.arm64"
+    chmod +x fntv.arm64
+fi
 
 info "依赖安装完成 ✅"
