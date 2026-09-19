@@ -118,22 +118,22 @@ esac
 
 # 下载依赖包
 if [ "${NEED_EXTENDS}" = "true" ]; then
-    wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/lib.extends.zip"
+    wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/lib.extends.zip"
     unzip lib.extends.zip
     rm lib.extends.zip
 fi
 
 
-wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim-media-lib.zip"
+wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim-media-lib.zip"
 unzip trim-media-lib.zip
 rm trim-media-lib.zip
 
-wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim.media.tar.gz"
+wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim.media.tar.gz"
 tar xzvf trim.media.tar.gz
 rm trim.media.tar.gz
 
 if [ ! -e "./fntv.arm64" ]; then
-    wget "${PROXY_PREFIX}https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/fntv.arm64"
+    wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/fntv.arm64"
     chmod +x fntv.arm64
 fi
 
