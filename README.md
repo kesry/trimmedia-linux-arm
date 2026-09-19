@@ -1,6 +1,6 @@
 # trimmedia-linux
 
-将飞牛 OS（fnOS）的影视应用 `trim.media` 及其闭源后端 `mediasrv` 移植到通用 Linux（arm64）环境运行的项目。通过一个自研的 `rpcbroker` 中间层，模拟飞牛系统的 RPC / 应用中心服务，使原本依赖飞牛平台的影视服务可以在独立的 Debian / Ubuntu 等系统上启动并提供 Web 影视库能力。
+将飞牛 OS（fnOS）的影视应用 `trim.media` 及其闭源后端 `mediasrv` 移植到通用 Linux（arm64）环境运行的项目。通过一个 `rpcbroker` 中间层，模拟飞牛系统的 RPC / 应用中心服务，使原本依赖飞牛平台的影视服务可以在独立的 Debian / Ubuntu 等系统上启动并提供 Web 影视库能力。
 
 ## 功能特性
 
