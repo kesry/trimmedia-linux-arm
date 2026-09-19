@@ -118,16 +118,19 @@ esac
 
 # 下载依赖包
 if [ "${NEED_EXTENDS}" = "true" ]; then
+    rm -rf lib.extends.zip
     wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/lib.extends.zip"
     unzip lib.extends.zip
     rm lib.extends.zip
 fi
 
 
+rm -rf trim-media-lib.zip
 wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim-media-lib.zip"
 unzip trim-media-lib.zip
 rm trim-media-lib.zip
 
+rm -rf trim.media.tar.gz
 wget "${PROXY_PREFIX}/https://github.com/kesry/trimmedia-linux-arm/releases/download/v1/trim.media.tar.gz"
 tar xzvf trim.media.tar.gz
 rm trim.media.tar.gz
