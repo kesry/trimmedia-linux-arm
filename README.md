@@ -190,4 +190,4 @@ fnmusic.arm64 &                      # 4. 音乐（:8007），与 3 无先后依
 ## 许可与致谢
 
 - 本项目中的启动器代码（`apps/*/` 下的 `*.go`、Makefile、`nodri.c`、打包/安装脚本）为本仓库编写。
-- **fntv 及其他应用的运行时核心不属于本项目**：`trim-media`、`trim-music`、`mediasrv` 预编译二进制、`init.sql` / `trim.media.tar.gz` / `trim.music.tar.gz` / `trim-media-lib.zip` 等均来自第三方项目 [kesry/trimmedia-linux-arm](https://github.com/kesry/trimmedia-linux-arm)，其原始权利归属于飞牛（fnOS）及该项目作者。本仓库仅做移植、包装与启动方式研究，不代表对核心代码的任何原创声明。
+- **fntv 及其他应用的运行时核心不属于本项目**：`trim-media`、`trim-music`、`mediasrv` 预编译二进制、`init.sql` / `trim.media.tar.gz` / `trim.music.tar.gz` / `trim-media-lib.zip` 等均来自网络，其原始权利归属于飞牛（fnOS）及该项目作者。本仓库仅做移植、包装与启动方式研究，不代表对核心代码的任何原创声明。
