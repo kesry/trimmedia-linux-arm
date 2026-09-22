@@ -1,7 +1,7 @@
 # trimapps
 
 > 以下内容由AI生成，自行辨别
-
+> 登录用户`admin`，密码`123456`
 将飞牛 OS（fnOS）的部分系统应用移植到普通 ARM64 Linux（Debian / Ubuntu）运行的实验项目。
 
 包含 4 个可独立打包、独立运行的服务，均以 Go 编写的**启动器（wrapper）**形式存在：Go 二进制负责环境准备、数据库初始化、子进程管理，真正的业务核心是飞牛系统里提取出来的预编译二进制（`trim-media`、`trim-music`、`mediasrv`）。
