@@ -25,8 +25,9 @@ cp -v install.sh output/temp/
 
 gcc -shared -fPIC -o output/temp/nodri.so ../../nodri.c
 gcc -shared -fPIC -o output/temp/fakecompat.so ../../fakecompat.c
+gcc -shared -fPIC -o output/temp/nodmaheap.so ../../nodmaheap.c
 
-tar -czvf output/mediasrv.tgz -C output/temp "mediasrv.${ARCH}" install.sh nodri.so fakecompat.so
+tar -czvf output/mediasrv.tgz -C output/temp "mediasrv.${ARCH}" install.sh nodri.so fakecompat.so nodmaheap.so
 rm -rf output/temp
 rm -rf bin/
 echo "all done"
