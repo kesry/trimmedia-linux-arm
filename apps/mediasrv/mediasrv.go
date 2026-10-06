@@ -36,6 +36,7 @@ func main() {
 	CUST_LD_PRELOAD := os.Getenv("LD_PRELOAD")
 	LD_PRELOAD_LIB := []string{}
 	NODIRSO := filepath.Join(BINPATH, "lib/nodri.so")
+	NODMAHEAPSO := filepath.Join(BINPATH, "lib/nodmaheap.so")
 	NOCPUINFOSO := filepath.Join(BINPATH, "lib/fakecompat.so")
 	if CUST_LD_PRELOAD != "" {
 		LD_PRELOAD_LIB = append(LD_PRELOAD_LIB, CUST_LD_PRELOAD)
@@ -43,6 +44,10 @@ func main() {
 
 	if _, err := os.Stat(NODIRSO); err == nil {
 		LD_PRELOAD_LIB = append(LD_PRELOAD_LIB, NODIRSO)
+	}
+
+	if _, err := os.Stat(NODMAHEAPSO); err == nil {
+		LD_PRELOAD_LIB = append(LD_PRELOAD_LIB, NODMAHEAPSO)
 	}
 
 	if _, err := os.Stat(NOCPUINFOSO); err == nil {
