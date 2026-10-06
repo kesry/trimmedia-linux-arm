@@ -87,6 +87,13 @@ if [ ! -e "/proc/device-tree/compatible" ]; then
     fi
 fi
 
+if [ -e "/dev/dma_heap" ]; then
+    if [ -e "nodmaheap.so" ]; then
+        mv nodmaheap.so lib/
+    fi
+fi
+
+
 chmod +x ./mediasrv.arm64
 
 info "依赖安装完成 ✅"
