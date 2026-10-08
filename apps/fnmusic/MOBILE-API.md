@@ -147,6 +147,11 @@ GET /mobile/api/v1/media/stream?guid=<trackGuid>&t=<token>
 GET /mobile/api/v1/media/cover/track?guid=<trackGuid>&t=<token>
 ```
 
+> **响应头透传约定**：媒体代理只剔逐跳头（`Transfer-Encoding`/`Connection`/`Keep-Alive`/`Upgrade`/`TE`/`Trailer`），
+> 上游给的 `Content-Length` / `Content-Range` / `Accept-Ranges` **一律原样透传**（204/304 除外）。
+> 这是播放能用「按总长规划缓冲 + 字节区间 seek」的前提：一旦总长丢失，`<audio>` 会退化成
+> 「下多少播多少」的未知长度浅缓冲流，网络抖动即卡顿（历史踩坑，见前端仓库 `docs/07-踩坑记录.md` 坑 26）。
+
 ---
 
 ## 8. 设置 / 系统 / 管理端
@@ -195,3 +200,82 @@ GET /mobile/api/v1/media/cover/track?guid=<trackGuid>&t=<token>
 4. `utils/media.js`：已删除原生 blob 抓取/全局观察者（网关为 HTTPS，无混合内容限制）。
 
 > 网关地址：`https://fnmusic.orgic.dpdns.org:233`（登录页填入的 host 即此网关；`/mobile` 与 legacy `/music` 同端口提供）。
+
+---
+
+## 11. 一起听（房间同步播放）
+
+> 实现见 [`listen_room.go`](./listen_room.go)，路由在 `mobileAPIHandler` 内以 `registerRoomRoutes(mux, base+"/room", tr)` 挂载，与其它移动接口共用 `withCORS(withToken(mux))`。
+>
+> **同步模型**：服务端是房间播放状态的唯一事实源。房间维护单调递增的 `version`；任一成员的控制动作经 `POST /room/command` 上行，服务端应用 → `version++` → 通过 SSE 广播新状态；所有成员端以广播状态收敛本地播放。锚点进度由 `positionMs`（打点时刻位置）+ `serverTimeMs`（打点时刻）派生权威当前位置，各端按自身时钟计算漂移并硬对齐。
+>
+> **内存态**：房间保存在进程内 `sync.Map`，单实例临时会话，**重启即丢**；空房或 `30min` 无活动自动回收。
+>
+> **身份**：成员身份由 token 解析（复用 `withToken` 注入的 Cookie 走上游 `user/me`），客户端**不能伪造** `userId` 抢控制权；`admin` 角色在房间语义里映射为可任房主 `host`。
+
+### 端点一览
+
+| 移动端 | 方法 | 说明 |
+|---|---|---|
+| `/room/create` | POST | 建房，body `{ name? }` → `{ code, state, members }`；建房者记为 `host` |
+| `/room/join` | POST | 加入，body `{ code }` → `{ state, members }`；房间不存在回 `code=404` |
+| `/room/leave` | POST | 离开，body `{ code }` → `{}`（幂等，始终 `code=0`） |
+| `/room/state` | GET | `?code=` 拉当前快照 `{ state, members }`（SSE 重连后补拉） |
+| `/room/command` | POST | 控制命令，见下 → `{ state }` |
+| `/room/events` | GET | **SSE** 事件流，`?code=&t=<token>`；见下 |
+
+### `state` 快照结构
+
+```json
+{
+  "code": "ABC234",
+  "hostId": "<房主用户 guid>",
+  "version": 7,
+  "queue": [ { "guid": "..", "title": "..", "artist": "..", "coverId": "..", "durationMs": 0 } ],
+  "index": 0,
+  "playing": true,
+  "positionMs": 12000,
+  "serverTimeMs": 1737500000000,
+  "closed": false
+}
+```
+
+> 队列条目 `TrackRef` 只存 **token-free 轻量元数据**（`guid/title/artist/coverId/durationMs`）；各端用**自身 token** 现构 `/media/stream?guid=&t=` 与 `/media/cover/track?guid=&t=`，不共享发起者凭据。
+
+### `member` 结构
+
+```json
+{ "id": "<用户 guid>", "name": "..", "avatar": "..", "role": "host|member", "joinedAt": 1737500000000 }
+```
+
+### `POST /room/command` — 命令集
+
+统一 body：`{ code, cmd, ... }`；按 `cmd` 取用附加字段。成功回 `{ "state": <新快照> }`。
+
+| `cmd` | 附加字段 | 作用 | 权限 |
+|---|---|---|---|
+| `play` / `pause` / `toggle` | — | 固化锚点后设置播放态 | 任意成员 |
+| `seek` | `positionMs`（≥0） | 绝对定位（毫秒） | 任意成员 |
+| `next` / `prev` | — | 循环切换当前曲，位置归零 | 任意成员 |
+| `setQueue` | `queue:[TrackRef]`、`index`、`positionMs?` | 整体替换共享队列 | 任意成员 |
+| `queueAdd` | `items:[TrackRef]` | 追加条目 | 任意成员 |
+| `queueRemove` | `index` | 删除指定下标（删当前曲之前条目时 `Index` 前移、删当前曲则位置归零） | 任意成员 |
+| `setIndex` | `index` | 仅切当前曲下标、位置归零（点队列某曲播放，不换队列） | 任意成员 |
+| `kick` | `userId` | 踢出成员（给它单发 `closed{kicked:true}` 帧再摘除） | **仅房主** |
+| `close` | — | 关房：广播 `state` + `closed`，从全局表移除 | **仅房主** |
+
+> 未知 `cmd` → `code=400`「未知命令」；非房主执行 `kick`/`close` → `code=400` 带中文原因。若发命令的成员已不在房间（如断线期间被清），服务端自动补登记再执行，避免命令被拒。
+
+### `GET /room/events` — SSE 事件流
+
+响应头 `Content-Type: text/event-stream`、`X-Accel-Buffering: no`，开场发 `retry: 3000`。**连接即视为加入**（内部 `addMember`）。
+
+每帧格式：`event: <name>\ndata: <json>\n\n`。事件名：
+
+| `event` | `data` | 时机 |
+|---|---|---|
+| `state` | `<state 快照>` | 连上立即下发首帧；此后每次命令导致 `version++` 广播 |
+| `members` | `[<member>...]` | 成员进出/踢人时广播 |
+| `closed` | `{}` 或 `{"kicked":true}` | 房主关房 / 被踢；随后服务端关闭该连接 |
+
+> 服务端每 `15s` 发一行 `: ping` 注释帧保活探活；成员 SSE 缓冲（`16` 帧）写满判定为慢/死客户端，直接关闭其通道并从房间摘除。客户端 `EventSource` 断线自动按 `retry` 重连，重连成功后应调 `GET /room/state` 补拉最新快照。
