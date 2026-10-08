@@ -233,6 +233,9 @@ func mobileAPIHandler(tr *http.Transport) http.Handler {
 		})
 	}
 
+	// 一起听房间（内存房间内核 + SSE 广播，见 listen_room.go / docs/06）
+	registerRoomRoutes(mux, base+"/room", tr)
+
 	return withCORS(withToken(mux))
 }
 
@@ -540,6 +543,13 @@ func doUpstream(r *http.Request, tr *http.Transport, method, path string, q url.
 }
 
 // proxyRaw 原样转发（媒体/流/二进制），保留 Range、Content-Type 等，支持 206。
+//
+// 响应头只剔逐跳（hop-by-hop）头，其余一律原样透传，尤其不能再丢 Content-Length：
+// 早期实现把 content-length 一并跳过，客户端收到的始终是「总长未知」的分块流，
+// 媒体栈（Chrome / Android WebView）无法按总长规划缓冲、也无法做字节↔时间映射，
+// 只能退化成「下多少播多少」的浅缓冲流，网络一抖就卡。总长已知才是常规音乐 App
+// 的流式播放形态（可精确 seek、可预取到文件尾）。
+// 例外：204/304 按协议不携带实体，长度头交给 net/http 自己框定。
 func proxyRaw(w http.ResponseWriter, r *http.Request, tr *http.Transport, path string, q url.Values) {
 	req, err := http.NewRequestWithContext(r.Context(), r.Method, "http://trim.music"+path, r.Body)
 	if err != nil {
@@ -554,10 +564,16 @@ func proxyRaw(w http.ResponseWriter, r *http.Request, tr *http.Transport, path s
 		return
 	}
 	defer resp.Body.Close()
+	noBody := resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusNotModified
 	for k, vs := range resp.Header {
 		switch strings.ToLower(k) {
-		case "content-length", "transfer-encoding", "connection":
+		case "transfer-encoding", "connection", "keep-alive", "upgrade", "proxy-connection", "te", "trailer":
 			continue
+		case "content-length", "content-range":
+			// 只在无实体的响应上丢弃长度头；有实体时落回下面的 Add 原样透传
+			if noBody {
+				continue
+			}
 		}
 		for _, v := range vs {
 			w.Header().Add(k, v)
